@@ -1,13 +1,4 @@
-#!/usr/bin/env python
-
-"""Copyright 2010 Phidgets Inc.
-This work is licensed under the Creative Commons Attribution 2.5 Canada License. 
-To view a copy of this license, visit http://creativecommons.org/licenses/by/2.5/ca/
-"""
-
-__author__ = 'Adam Stelmack'
-__version__ = '2.1.8'
-__date__ = 'May 17 2010'
+(self._interfaceKit#!/usr/bin/env python
 
 #Basic imports
 from ctypes import *
@@ -19,64 +10,62 @@ from Phidgets.Events.Events import AttachEventArgs, DetachEventArgs, ErrorEventA
 from Phidgets.Devices.InterfaceKit import InterfaceKit
 from Phidgets.Phidget import PhidgetLogLevel
 
-#Create an interfacekit object
-try:
-    interfaceKit = InterfaceKit()
-except RuntimeError as e:
-    print("Runtime Exception: %s" % e.details)
-    print("Exiting....")
-    exit(1)
 
-#Information Display Function
-def displayDeviceInfo():
-    print("|------------|----------------------------------|--------------|------------|")
-    print("|- Attached -|-              Type              -|- Serial No. -|-  Version -|")
-    print("|------------|----------------------------------|--------------|------------|")
-    print("|- %8s -|- %30s -|- %10d -|- %8d -|" % (interfaceKit.isAttached(), interfaceKit.getDeviceName(), interfaceKit.getSerialNum(), interfaceKit.getDeviceVersion()))
-    print("|------------|----------------------------------|--------------|------------|")
-    print("Number of Digital Inputs: %i" % (interfaceKit.getInputCount()))
-    print("Number of Digital Outputs: %i" % (interfaceKit.getOutputCount()))
-    print("Number of Sensor Inputs: %i" % (interfaceKit.getSensorCount()))
+class Phidget(object):
+    def __init__(self, sensor_change_cb=self._interfaceKitSensorChanged):
+        self.interfaceKit = InterfaceKit()
 
-#Event Handler Callback Functions
-def interfaceKitAttached(e):
-    attached = e.device
-    print("InterfaceKit %i Attached!" % (attached.getSerialNum()))
+        self.interfaceKit.setOnAttachHandler(self._interfaceKitAttached)
+        self.interfaceKit.setOnDetachHandler(self._interfaceKitDetached)
+        self.interfaceKit.setOnErrorhandler(self._interfaceKitError)
+        self.interfaceKit.setOnInputChangeHandler(self._interfaceKitInputChanged)
+        self.interfaceKit.setOnOutputChangeHandler(self._interfaceKitOutputChanged)
+        self.interfaceKit.setOnSensorChangeHandler(self._interfaceKitSensorChanged)
 
-def interfaceKitDetached(e):
-    detached = e.device
-    print("InterfaceKit %i Detached!" % (detached.getSerialNum()))
+    def displayDeviceInfo():
+        print("|------------|----------------------------------|--------------|------------|")
+        print("|- Attached -|-              Type              -|- Serial No. -|-  Version -|")
+        print("|------------|----------------------------------|--------------|------------|")
+        print("|- %8s -|- %30s -|- %10d -|- %8d -|" % (interfaceKit.isAttached(), interfaceKit.getDeviceName(), interfaceKit.getSerialNum(), interfaceKit.getDeviceVersion()))
+        print("|------------|----------------------------------|--------------|------------|")
+        print("Number of Digital Inputs: %i" % (interfaceKit.getInputCount()))
+        print("Number of Digital Outputs: %i" % (interfaceKit.getOutputCount()))
+        print("Number of Sensor Inputs: %i" % (interfaceKit.getSensorCount()))
 
-def interfaceKitError(e):
-    try:
+    def _interfaceKitAttached(e):
+        attached = e.device
+        print("InterfaceKit %i Attached!" % (attached.getSerialNum()))
+
+    def _interfaceKitDetached(e):
+        detached = e.device
+        print("InterfaceKit %i Detached!" % (detached.getSerialNum()))
+
+    def _interfaceKitError(e):
+        try:
+            source = e.device
+            print("InterfaceKit %i: Phidget Error %i: %s" % (source.getSerialNum(), e.eCode, e.description))
+        except PhidgetException as e:
+            print("Phidget Exception %i: %s" % (e.code, e.details))
+
+    def _interfaceKitInputChanged(e):
         source = e.device
-        print("InterfaceKit %i: Phidget Error %i: %s" % (source.getSerialNum(), e.eCode, e.description))
-    except PhidgetException as e:
-        print("Phidget Exception %i: %s" % (e.code, e.details))
+        print("InterfaceKit %i: Input %i: %s" % (source.getSerialNum(), e.index, e.state))
 
-def interfaceKitInputChanged(e):
-    source = e.device
-    print("InterfaceKit %i: Input %i: %s" % (source.getSerialNum(), e.index, e.state))
+    def _interfaceKitSensorChanged(e):
+        source = e.device
+        print("InterfaceKit %i: Sensor %i: %i" % (source.getSerialNum(), e.index, e.value))
 
-def interfaceKitSensorChanged(e):
-    source = e.device
-    print("InterfaceKit %i: Sensor %i: %i" % (source.getSerialNum(), e.index, e.value))
+    def _interfaceKitOutputChanged(e):
+        source = e.device
+        print("InterfaceKit %i: Output %i: %s" % (source.getSerialNum(), e.index, e.state))
 
-def interfaceKitOutputChanged(e):
-    source = e.device
-    print("InterfaceKit %i: Output %i: %s" % (source.getSerialNum(), e.index, e.state))
 
 #Main Program Code
 try:
 	#logging example, uncomment to generate a log file
     #interfaceKit.enableLogging(PhidgetLogLevel.PHIDGET_LOG_VERBOSE, "phidgetlog.log")
-	
-    interfaceKit.setOnAttachHandler(interfaceKitAttached)
-    interfaceKit.setOnDetachHandler(interfaceKitDetached)
-    interfaceKit.setOnErrorhandler(interfaceKitError)
-    interfaceKit.setOnInputChangeHandler(interfaceKitInputChanged)
-    interfaceKit.setOnOutputChangeHandler(interfaceKitOutputChanged)
-    interfaceKit.setOnSensorChangeHandler(interfaceKitSensorChanged)
+
+
 except PhidgetException as e:
     print("Phidget Exception %i: %s" % (e.code, e.details))
     print("Exiting....")
@@ -111,7 +100,7 @@ else:
 print("Setting the data rate for each sensor index to 4ms....")
 for i in range(interfaceKit.getSensorCount()):
     try:
-        
+
         interfaceKit.setDataRate(i, 4)
     except PhidgetException as e:
         print("Phidget Exception %i: %s" % (e.code, e.details))
