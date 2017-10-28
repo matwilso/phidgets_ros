@@ -1,3 +1,7 @@
+You will need to modify this a lot for your custom use case, but it can be a good place to get started
+
+
+
 
 To use this package, you must install the C libraries for Phidgets:
 
